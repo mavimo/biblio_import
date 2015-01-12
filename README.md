@@ -32,8 +32,26 @@ Mentre le pricipali presenti come **destinazione** sono:
  * ```MigrateDestinationTerm```:  costruisce un Taxonomy term in Drupal.
  * ```MigrateDestinationUser```:  costruisce un User in Drupal.
 
-Migrate mantiene una relazione tra una determinata sorgente di dati e la sua destinazione, in modo che in caso di una modifica alla sorgente sia possibile effettuare un aggiornamento dei dati migrati consentendo quindi di aggiornare anche i dati importati in Drupal. Questo viene svolto dalla classe di mapping; la classe tipicamente utilizzata per questo tipo di operazioni è la classe ```MigrateSQLMap``` che mantiene questa correlazione scrivendo i dati all'interno di una tabella sullo schema SQL dell'istanza di Drupal in cui vengono importati i dati.
+Migrate mantiene una relazione tra una determinata sorgente di dati e la sua destinazione, in modo che in caso di una modifica alla sorgente sia possibile effettuare un aggiornamento dei dati migrati consentendo quindi di aggiornare anche i dati importati in Drupal. Questo viene svolto dalla classe di **mapping**; la classe tipicamente utilizzata per questo tipo di operazioni è la classe ```MigrateSQLMap``` che mantiene questa correlazione scrivendo i dati all'interno di una tabella sullo schema SQL dell'istanza di Drupal in cui vengono importati i dati.
 
-### DataSource
+Il meccanismo che definisce il passaggio dei dati dalla sorgente alla destinazione, mantenendo il collegamento tra le stesse attraverso un mapping e che consente la manipolazione dei dati nel passaggio è definito come **Migration**.
 
-Le sorgenti dati sono 
+Da questa brevissima introduziona abbiamo già identificato un subset specifico di componenti che sono coinvolti nella migrazione e sono:
+
+ * La sorgente dati (spesso definita anche come ```DataSource```)
+ * La destinazione dei dati (detta anche ```DestinationSoruce```)
+ * Il meccanismo di mapping
+ * Il meccanismo di migrazione dati (la ```Migration```)
+
+### Data Source
+
+Le sorgenti dati sono appunto il sistema che consente di leggere i dati di partenza da una sorgente esterna. Tipicamente la sorgente dati è costituita da una lista di elementi (```MigrateList```) ognuno dei quali costituisce una riga di dati da migrare (```MigrateItem```).
+
+Prendiamo ad esempio una sorgente definita come *SQL Source*, avremo una query SQL che riporta l'elenco degli oggetti da migrare, questa query restituisce l'elenco degli elementi mentre ogni singola riga dei risultati della query è un item della migrazione (in realtà vedremo in seguito che questa è vero, ma potrebbe anche essere solo un'approssimazione).
+
+
+### Destination Source
+
+### Mapping
+
+### Migration
