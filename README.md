@@ -49,6 +49,89 @@ Le sorgenti dati sono appunto il sistema che consente di leggere i dati di parte
 
 Prendiamo ad esempio una sorgente definita come *SQL Source*, avremo una query SQL che riporta l'elenco degli oggetti da migrare, questa query restituisce l'elenco degli elementi mentre ogni singola riga dei risultati della query è un item della migrazione (in realtà vedremo in seguito che questa è vero, ma potrebbe anche essere solo un'approssimazione).
 
+#### SQL Source
+
+Qualora la nostra sorgente fosse un database, quasi sicuramente ci troveremo con l'esigenza di mappare la sorgente dei dati con una query (ricordiamoci, in prima battuta dobbiamo riportare ad ogni riga un elemento da migrare).
+
+Una volta individuata la query che ci consente di avere la nostra sorgende di dati dobbiamo "trasformarla" nell'equivalente della query definita usando la ```SelectQueryInterface``` di Drupal, quindi ad esempio:
+
+```sql
+SELECT fname, lname, birthday FROM myapp_user WHERE birthday < NOW();
+````
+
+Verrà convertita in:
+
+```php
+$query = db_select('myapp_user', 'u')
+             ->fields('u', array('fname', 'lname', 'birthday'));
+$query->condition('u.birtday', 'NOW()', '>');
+
+$source = new MigrateSourceSQL($query);
+```
+
+Una volta costruita la query dovremmo passare questa informazione alla classe ```MigrateSourceSQL``` che costruirà la sorgente di dati usata da Migrate per effettuare la migrazione dei dati.
+
+La signature completa del costruttore della classe riporta:
+
+```php
+MigrateSourceSQL(
+  SelectQueryInterface $query,
+  array $fields = array(),
+  SelectQueryInterface $count_query = NULL,
+  array $options = array()
+)
+```
+
+Dove appunto vediamo che il primo (e unico) parametro obbligatorio è appunto la query che fa da sorgente nella nostra migrazione.
+
+#### CSV Source
+
+
+Qualora la nostra sorgente fosse un file CSV dovremmo passare questa informazione alla classe ```MigrateSourceCSV``` che costruirà la sorgente di dati usata da Migrate per effettuare la migrazione dei dati.
+
+La signature completa del costruttore della classe riporta:
+
+```php
+MigrateSourceCSV(
+  $path,
+  array $csvcolumns = array(),
+  array $options = array(),
+  array $fields = array()
+)
+```
+
+Dove appunto vediamo che il primo (e unico) parametro obbligatorio è il percorso del file contenente la nostra sorgente dati. Il secondo parametro, invece, riporta l'elenco delle colonne presente nel CSV. Il sistema, nel caso in cui non sia definito, cercherà di individuare i campi presenti nel file e individuare quindi le colonne, ma per comodità è sempre preferibile esplicitare le colonne che ne fanno parte. Il terzo parametro, invece, specifica le opzioni di parsing del CSV, quindi il separatore dei campi, l'enclosure (come vengono "racchiusi" i campi) ed il carattere di escaping ed è anche è utilizzato per indicare la presenza di una riga di intestazione.
+
+Facciamo l'esempio di una sorgente contenente appunto nome, cognome e data di nascita, in un file CSV (con nome ```app_users.csv``` posizionato nella cartella ```data``` del nostro modulo) come di seguito riportato:
+
+```csv
+fname;lname;brithday
+"Marco";"Moscaritolo";1983-04-22
+"Mario";"Rossi";1984-09-03
+```
+
+Nel nostro caso avremo:
+
+```php
+$path = drupal_get_path('module', 'biblio_import') . '/data/app_users.csv';
+
+$columns = array(
+  array('fname', 'User: First name'),
+  array('lname', 'User: Last name'),
+  array('birthday', 'User: Birthday'),
+);
+
+$options = array(
+  'delimiter' => ';',
+  'enclosure' => '"',
+  'escape' => '\\',
+  'header_rows' => 1,
+);
+
+$source = new MigrateSourceCSV($path, $columns, $options);
+```
+
+dove nelle colonne è specificato come primo valore dell'array il nome della colonna, mentre nel secondo la descrizione visibile nella UI di migrate.
 
 ### Destination Source
 
