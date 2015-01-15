@@ -167,4 +167,65 @@ Vi è un secondo parametro usato per la gestione dei duplicati, in caso di neces
 
 ### Mapping
 
+Come abbiamo detto precedentemente Drupal mantiene un collegamento tra la sorgente e la destinazione (l'entity di Drupal creata) della migrazione, per fare questo viene usato un mapping, mapping che solitamente viene costituito usando la classe di mapping ```MigrateSQLMap```. Questa classe ha la seguente firma del costruttore:
+
+```php
+MigrateSQLMap(
+  $machine_name,
+  array $source_key,
+  array $destination_key,
+  $connection_key = 'default',
+  $options = array()
+)
+```
+Dove il primo parametro indica il nome identificativo del mapping, solitamente questo valore corrisponde con in nome della migrazione corrente, ma può essere variato in alcune situazioni, ad esempio per avere migrazioni differenti ma con un unica tabella di mapping. Solitamente il valore usato per definire il machine name è la proprietà ```machineName``` della migrazione corrente.
+
+Il secondo parametro (```$source_key```) identifica le chiavi delle sorgenti usate come chiavi identificative della l'elemento della sorgente. A scopo di esempio, supponiamo che l'elenco di utenti usato come esempio precedentemente non consenta l'omonimia, per constraddistinguere in maniera univoca un utente è necessario la coppia *fname/lname*, pertanto la nostra chiave sorgente sarà definita come costituita da queste due chiavi. Per ognuna delle chiavi poi dovranno essere definiti gli attributi della colonna SQL necessari ad archiviare questo dato, nel nostro esempio avremo qualcosa di simile a:
+```php
+$source_key = array(
+  'fname' => array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'description' => 'User first name'
+  ),
+  'lname' => array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'description' => 'User last name'
+  ),
+);
+```
+
+La stessa cosa viene effettuata per la ```$destination_key``` con la differenza che in questo caso andremo ad usare la chiave primaria dell'entity creata durante la migrazione, ad esempio per gli utenti andremo ad usare l'uid. Per semplificare la definizione tutte le destination source definiscono un metodo statico ```getKeySchema``` che serve a restituire appunto la definizione della destination key, quindi per l'utente avremo:
+
+```php
+$destination_key = MigrateDestinationUser::getKeySchema();
+```
+
+Di coneguenza la nostra migration map sarà simile a:
+
+```php
+$map = new MigrateSQLMap(
+  $this->machineName,
+  array(
+    'fname' => array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'description' => 'User first name'
+    ),
+    'lname' => array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'description' => 'User last name'
+    ),
+  ),
+  MigrateDestinationUser::getKeySchema()
+);
+```
+
+
 ### Migration
