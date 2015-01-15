@@ -135,6 +135,36 @@ dove nelle colonne è specificato come primo valore dell'array il nome della col
 
 ### Destination Source
 
+Se il *Data Source* ci serviva a definire da dove prelevare i dati da migrare, con il *Destination Source* specificheremo dove le informazioni vanno a confluire all'interno di Drupal. Nella quasi totalità dei casi le destinazioni dei nostri dati sono delle entità Drupal (nodi, utenti, termini di tassonomia, ...) pertanto -come abbiamo visto in precedenza- esistono le classi di destinazione già customizzate per le principali entity di base di Drupal, con la possibilità di creare destinazioni custom ulteriori.
+Vediamo ad esempio le tre principali classi di destination:
+
+#### Node
+
+Prendiamo ad esempio la classe ```MigrateDestinationNode``` che permette di definire come destinazione una entity di tipo ```Node```, questa classe accetta come parametro il node type dell'entità che deve essere costituita (il bundle), per istanziare una destinazione di nodo, quindi è necessario costruirla specificando questo parametro, ad esempio:
+
+```php
+$destination = new MigrateDestinationNode('biblio_doc');
+```
+Questo indica al sistema che per ogni riga sorgente avremo una entity di tipo node di tipo *biblio_doc* creata.
+
+#### User
+
+Allo stesso modo la classe ```MigrateDestinationUser``` definisce che l'entity che viene creata è di tipo utente; in questo caso non è necessario specificare ulteriori parametri:
+
+```php
+$destination = new MigrateDestinationUser();
+```
+
+#### Termine della tassonomia
+
+Prendiamo ad esempio la classe ```MigrateDestinationTerm``` che permette di definire come destinazione una entity di tipo ```TaxonomyTerm```, questa classe accetta come parametro il machine name del vocabolario a cui il termini creato deve appartenere, quindi ad esempio:
+
+```php
+$destination = new MigrateDestinationTerm('biblio_book_type');
+```
+
+Vi è un secondo parametro usato per la gestione dei duplicati, in caso di necessità vi rimandiamo alla documentazione per approfondire i valiri delle opzioni.
+
 ### Mapping
 
 ### Migration
