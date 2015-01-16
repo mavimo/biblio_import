@@ -283,6 +283,39 @@ class BiblioImportMigrate extends Migrate {
 
 dove come possiamo vedere abbiamo usato le classi di source, destination e mapping viste in precedenza, assegnandone il valore a delle proprietà della classi migrate, in particolare alle proprietà ```map```, ```source``` e ```destination```.
 
+#### Modificare i dati in ingresso
+
+Qualche volta i dati in ingresso hanno necessità di essere modificati o di essere estesi, ad esempio per creare dati aggiuntivi. Nell'esempio che abbiamo preso in considerazione fino ad ora nell'importazione dell'utente -ad esempio- non abbiamo un attributo definito come username, che vogliamo corrisponda con nome e cogonome, in minuscolo, separati da un punto. Per fare questo possiamo sfruttare il metodo ```prepareRow``` della migrazione. Questo metodo permette di alterare i dati in ingresso per ottenere le informazioni che riteniamo necessarie, ad esempio:
+
+```php
+class BiblioImportMigrate extends Migrate {
+  public function __construct($arguments) {
+    // ...
+    $this->addFieldMapping('username', 'generated_username');
+  }
+
+  public function prepareRow(&$row) {
+    $row->generated_username = strtolower($row->fname . '.' . $row->lname);
+  }
+}
+```
+
+La stessa funzione può anche essere utilizzata per evitare che un determinato record venga migrato; per fare questo è sufficiente che la funzione ritorni false. Nel nostro esempio vogliamo escludere l'importazione dei dati dove la lunghezza del nome o del cognome è minore di 3 caratteri perché probabilmente si tratta di un dato fasullo; la nostra implementazione diventerebbe:
+
+```php
+class BiblioImportMigrate extends Migrate {
+  // ...
+
+  public function prepareRow(&$row) {
+    if (strlen($row->fname) < 3 || strlen($row->lname) < 3) {
+      return FALSE;
+    }
+
+    // ...
+  }
+}
+```
+
 ### Field mapping
 
 Con le informazioni minime viste in precedenza la nostra migrazione è effetivamente utilizzabile, ma manca ancora un ultimo step molto importante, ovvero il mapping delle informazioni estratte nella sorgente con quelle della destinazione. Questa operazione viene effettuata usando il metodo ```addFiedlMapping``` della classe di migrazione.
