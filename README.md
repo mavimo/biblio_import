@@ -485,7 +485,7 @@ fname;lname;brithday;notes;preferences
 
 E di conseguenza la migrazione degli utenti, ipotizzando che il nome del campo associato all'utente sia ```field_user_categories``` avremo:
 
-```
+```php
 $this->addFieldMapping('field_user_categories', 'categories')
   ->separator('|')
   ->sourceMigration('BookCategory');
