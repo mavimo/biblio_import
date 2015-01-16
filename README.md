@@ -361,6 +361,22 @@ $this->addFieldMapping('status')->defaultValue(1);
 $this->addFieldMapping('created')->defaultValue(strtotime('2015-01-01'));
 ```
 
+#### Valori multipli
+
+Nel momento in cui abbiamo necessità di avere dei valori multipli associati ad un singolo field, ad esempio perché all'utente abbiamo assegnato assegnato un campo di tipo testo multiplo (chiamato ```field_user_notes```) in cui vengono inserite alcune note. Nel nostro CSV di partenza, essendo che per ogni elemento migrato (quindi ogni utente) dobbiamo avere una sola riga, avremo le diverse note concatenate con un carattere separatore, ad esempio il carattere ```|```. Il nostro fil CSV diventerebbe qui:
+
+```csv
+fname;lname;brithday;notes
+"Marco";"Moscaritolo";1983-04-22;"Prima nota|Seconda nota"
+"Mario";"Rossi";1984-09-03;"Terza nota|Quarta nota|Quinta nota"
+```
+
+Per far si che questo venga interpretato correttamente durante la migrazione useremo il metodo ```separator```, specificando come argomento il carattere da usare -appunto- come separatore:
+
+```php
+$this->addFieldMapping('field_user_notes', 'notes')->separator('|');
+```
+
 #### Callbacks
 
 Cosa succede invece quando il valore di una proprietà non è corrispondente al valore sorgente, ma dobbiamo procedere con una modifica (ad esempio dobbiamo convertire il formato della data)? Ci viene in aiuto l'utilizzo delle callback che servono appunto a processare un dato in ingresso prima che questo venga preso in considerazione dalla migrazione, ma senza modificare il dato della sorgente, ovvero mantenendo l'informazione originale come dato di sorgente.
