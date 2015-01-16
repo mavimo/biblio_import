@@ -522,3 +522,45 @@ Il file ```module``` non necessità di particolari dichiarazioni, quindi avremo:
  * Import biblio informations in Drupal
  */
 ```
+
+Oltre alla definizione del modulo creeremo il file ```NOME_MODULO.migrate.inc``` in cui andremo a definire l'implementazione dell'```hook_migrate_api``` che riporta effettivamente quali sono le migrazioni che il nostro modulo implementa, quindi:
+
+```php
+<?php
+/**
+ * @file
+ * Our own hook implementation.
+ */
+
+/**
+ * Implements hook_migrate_api().
+ */
+function biblio_import_migrate_api() {
+  $api = array(
+    'api' => MIGRATE_API_VERSION,
+    'groups' => array(
+      'biblio' => array(
+        'title' => t('Biblio'),
+      ),
+    ),
+    'migrations' => array(
+      'BiblioTerm' => array(
+        'class_name' => 'BiblioTermMigration',
+        'group_name' => 'biblio',
+      ),
+      'BiblioUser' => array(
+        'class_name' => 'BiblioUserMigration',
+        'group_name' => 'biblio',
+      ),
+      'BiblioItem' => array(
+        'class_name' => 'BiblioItemMigration',
+        'group_name' => 'biblio',
+      ),
+    ),
+  );
+
+  return $api;
+}
+```
+
+dove stiamo indicando che esiste un gruppo di migrazione (con machien name ```biblio```) la cui label sarà ```Biblio```, e tre migrazioni in cui indichiamo per ogni machine name quale è la classe di migrazione che definisce la migrazione e a quale gruppo questa migrazione appartiene.
