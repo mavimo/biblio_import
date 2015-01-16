@@ -409,3 +409,86 @@ class BiblioImportMigrate extends Migrate {
   }
 }
 ```
+
+#### Dipendenze tra migrazioni
+
+Spesso capita che determinate migrazioni dipendano da altri informazioni che devono essere migrate, ad esempio potremmo voler taggare i nostri utenti con dei tag che sono a loro volta importati da un altra migrazione, ad esempio se consideriamo i nostri utenti della bilbioteca potremmo avere diverse categorie di generi lettari e vorremo taggare gli utenti con i generi letterari che preferiscono.
+
+La sorgente delle categorie letterarie, sempre da CSV, risulta quindi essere:
+
+```csv
+category
+"Romanzo"
+"Sci-fi"
+"Saggio"
+"Fantasy"
+```
+
+E la corrispettiva migrazione, che importa questi tag all'interno del vocabolario ```book_category```:
+
+```php
+class BookCategoryMigrate extends Migrate {
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+
+    // Mapping =================================================================
+    $this->map = new MigrateSQLMap(
+      $this->machineName,
+      array(
+        'category' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => 'Book category'
+        ),
+      ),
+      MigrateDestinationTerm::getKeySchema()
+    );
+
+    // Source ==================================================================
+    $path = drupal_get_path('module', 'biblio_import') . '/data/book_category.csv';
+
+    $columns = array(
+      array('category', 'Book category'),
+    );
+
+    $options = array(
+      'delimiter' => ';',
+      'enclosure' => '"',
+      'escape' => '\\',
+      'header_rows' => 1,
+    );
+
+    $this->source = new MigrateSourceCSV($path, $columns, $options);
+
+    // Destination =============================================================
+    $this->destination = new MigrateDestinationTerm('book_category');
+
+    // Fileds mapping ==========================================================
+    $this->addFieldMapping('name', 'category');
+
+    // ...
+  }
+}
+```
+
+La migrazione procede quindi creando dei termini di tassonomia, mappando come chiave della sorgente il nome del termine stesso.
+
+Nella nostra sorgente di dati dobbiamo quindi avere informazioni relative alla categorie di interesse dell'utente, quindi il nostro CSV diventerà:
+
+
+```csv
+fname;lname;brithday;notes;preferences
+"Marco";"Moscaritolo";1983-04-22;"Prima nota|Seconda nota";"Sci-Fi|Fantasy"
+"Mario";"Rossi";1984-09-03;"Terza nota|Quarta nota|Quinta nota";"Sci-Fi|Romanzo"
+```
+
+E di conseguenza la migrazione degli utenti, ipotizzando che il nome del campo associato all'utente sia ```field_user_categories``` avremo:
+
+```
+$this->addFieldMapping('field_user_categories', 'categories')
+  ->separator('|')
+  ->sourceMigration('BookCategory');
+```
+
+come vediamo stiamo usando nuovamente il metodo ```separator``` poiché abbiamo più di un elemento nel nostro campo, ma la parte interessante è il metodo ```sourceMigration``, che indica che migrazione usare per "convertire" il nostro valore di partenza con il valore identificativo dell'entità di destinazione della migrazione dipendente. Nel caso riprotato pocanzi la migrazione ```BookCategoryMigration``` ha migrato i dati del CSV in termini della tassonomia, salvando nella tabella di mapping la chiave della sorgente (il nome del termine) e la chiave di destinazione (l'ID del termine, il TID). Il source migration utilizza i dati salvati nella tabella di mapping per convertire il valore in ingresso (che sarà la chiave della sorgente) nella corrispettiva chiave della destinazione. questo consente di avere i TID corretti che sono quelli che vengono poi realmente referenziati all'interno della destinazione della migrazione utente.
