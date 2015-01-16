@@ -22,11 +22,11 @@ Le classi principali che troviamo come **sorgenti** sono:
  * ```MigrateSourceMongoDB```:  Da usare per sorgenti dati presenti sul database documentale MongoDB.
  * ```MigrateSourceSQL```: Da usare per sorgenti dati presenti su database SQL based (tipicamente MySQL / PostgreSQL).
  * ```MigrateSourceXML```:  Da usare quando la sorgente di dati è un file XML.
- 
+
 Mentre le pricipali presenti come **destinazione** sono:
 
  * ```MigrateDestinationEntity```:  costruisce un Entity generica in Drupal, classe tipicalmente estesa per l'implementazione di entità più specifiche, quali quelle di seguito riportate.
- * ```MigrateDestinationComment```: costruisce un oggetto Comment in Drupal. 
+ * ```MigrateDestinationComment```: costruisce un oggetto Comment in Drupal.
  * ```MigrateDestinationFile```:  costruisce un File in Drupal.
  * ```MigrateDestinationNode```:  costruisce un oggetto Node in Drupal.
  * ```MigrateDestinationTerm```:  costruisce un Taxonomy term in Drupal.
@@ -229,3 +229,134 @@ $map = new MigrateSQLMap(
 
 
 ### Migration
+
+Arriviamo ora al collante di tutto ciò che abbiamo visto fino ad ora, la classe di migrazione. Questa classe tipicamente estende la classe base di migration ```Migration``` e implementa nel costruttore tutte le configurazioni necessarie, a solo scopo esemplificativo:
+
+```php
+class BiblioImportMigrate extends Migrate {
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+
+    // Mapping =================================================================
+    $this->map = new MigrateSQLMap(
+      $this->machineName,
+      array(
+        'fname' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => 'User first name'
+        ),
+        'lname' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => 'User last name'
+        ),
+      ),
+      MigrateDestinationUser::getKeySchema()
+    );
+
+    // Source ==================================================================
+    $path = drupal_get_path('module', 'biblio_import') . '/data/app_users.csv';
+
+    $columns = array(
+      array('fname', 'User: First name'),
+      array('lname', 'User: Last name'),
+      array('birthday', 'User: Birthday'),
+    );
+
+    $options = array(
+      'delimiter' => ';',
+      'enclosure' => '"',
+      'escape' => '\\',
+      'header_rows' => 1,
+    );
+
+    $this->source = new MigrateSourceCSV($path, $columns, $options);
+
+    // Destination =============================================================
+    $this->destination = new MigrateDestinationUser();
+  }
+}
+```
+
+dove come possiamo vedere abbiamo usato le classi di source, destination e mapping viste in precedenza, assegnandone il valore a delle proprietà della classi migrate, in particolare alle proprietà ```map```, ```source``` e ```destination```.
+
+### Field mapping
+
+Con le informazioni minime viste in precedenza la nostra migrazione è effetivamente utilizzabile, ma manca ancora un ultimo step molto importante, ovvero il mapping delle informazioni estratte nella sorgente con quelle della destinazione. Questa operazione viene effettuata usando il metodo ```addFiedlMapping``` della classe di migrazione.
+
+Questo metodo ha la seguente firma:
+
+```php
+addFieldMapping(
+  $destination_field,
+  $source_field = NULL,
+  $warn_on_override = TRUE
+);
+```
+
+Dove il primo valore indica il nome del field di destinazione, ovvero la proprietà dell'entità di destinazione in cui le informazioni verrano inserite. Queste proprietà possono essere proprietà tipiche dell'entity di destinazione (ad esempio username o password per l'utente) o i machine name dei valori dei field. Supponendo che abbiamo inserito sull'utente in drupal tre field, due testuali e uno di tipo date, i cui machine name saranno:
+
+ * field_user_fname
+ * field_user_lname
+ * field_user_birthday
+
+Il secondo valore indica il nome nella sorgente, ad esempio il nome della colonna nelle migrazioni da CSV come sorgente o il nome del campo della tabella risultante come query in caso di sorgenti SQL.
+
+L'ultimo valore in input indica se scatenare un warn nel caso in cui la migrazione effettui il mapping due volte della stessa property.
+
+Il field mapping della migrazione sopra definita risulterà quindi simile a:
+
+```php
+$this->addFieldMapping('field_user_fname', 'fname');
+$this->addFieldMapping('field_user_lname', 'lname');
+$this->addFieldMapping('field_user_birthday', 'birthday');
+```
+
+dove appunto stiamo inserendo i valori delle colonne dei campi CSV dentro i field dell'entity di Drupal.
+
+#### Valori di default
+
+Come potete ben immaginare non sempre tutti i campi delle entità di destinazione sono presenti nei dati di partenza, quindi potrebbe essere necessario predisporre dei valori predefiniti per alcuni di essi, ad esempio per gli utenti potremmo voler specificare che questi utenti devono essere attivi e che la data di creazione e modifica non è la data corrente, ma il 1 gennaio 2015.
+
+Per fare questo è possibile mappare, usando la funzione già vista in precedenza, solamente il campi di destinazione e utilizzare poi il metodo ```defaultValue```, quindi nel nostro caso avremo:
+
+```php
+$this->addFieldMapping('status')->defaultValue(1);
+$this->addFieldMapping('created')->defaultValue(strtotime('2015-01-01'));
+```
+
+#### Callbacks
+
+Cosa succede invece quando il valore di una proprietà non è corrispondente al valore sorgente, ma dobbiamo procedere con una modifica (ad esempio dobbiamo convertire il formato della data)? Ci viene in aiuto l'utilizzo delle callback che servono appunto a processare un dato in ingresso prima che questo venga preso in considerazione dalla migrazione, ma senza modificare il dato della sorgente, ovvero mantenendo l'informazione originale come dato di sorgente.
+
+Nel nostro esempio precedente, per la data avremo:
+
+```php
+$this->addFieldMapping('field_user_birthday', 'birthday')->callbacks('strtotime');
+```
+
+dove stiamo dicendo che prima di assegnare alla proprietà ```field_user_birthday``` dell'utente il valore presente nel campo ```birthday``` della sorgente, andremo a passare questo valore attraverso la funzione ```strtotime``` di PHP, ovvero faremo un operazione simile a:
+
+```php
+$destination->field_user_birthday = strtotime($source->birthday);
+```
+
+Qualora avessimo necessità di svolgere operazioni più complesse, potremmo dichiarare all'interno della nostra classe di migrazione un metodo pubblico e usare questo come callback, ad esempio:
+
+```php
+class BiblioImportMigrate extends Migrate {
+  public function __construct($arguments) {
+    // ...
+    $this->addFieldMapping('field_user_birthday', 'birthday')
+      ->callbacks(array($this, 'convertBirthday'));
+  }
+
+  public function convertBirthday($data) {
+    // Faccio quello che serve...
+    return strtotime($data);
+  }
+}
+```
