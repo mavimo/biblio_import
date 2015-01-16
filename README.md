@@ -233,7 +233,7 @@ $map = new MigrateSQLMap(
 Arriviamo ora al collante di tutto ciò che abbiamo visto fino ad ora, la classe di migrazione. Questa classe tipicamente estende la classe base di migration ```Migration``` e implementa nel costruttore tutte le configurazioni necessarie, a solo scopo esemplificativo:
 
 ```php
-class BiblioImportMigrate extends Migrate {
+class BiblioUserMigrate extends Migrate {
   public function __construct($arguments) {
     parent::__construct($arguments);
 
@@ -288,7 +288,7 @@ dove come possiamo vedere abbiamo usato le classi di source, destination e mappi
 Qualche volta i dati in ingresso hanno necessità di essere modificati o di essere estesi, ad esempio per creare dati aggiuntivi. Nell'esempio che abbiamo preso in considerazione fino ad ora nell'importazione dell'utente -ad esempio- non abbiamo un attributo definito come username, che vogliamo corrisponda con nome e cogonome, in minuscolo, separati da un punto. Per fare questo possiamo sfruttare il metodo ```prepareRow``` della migrazione. Questo metodo permette di alterare i dati in ingresso per ottenere le informazioni che riteniamo necessarie, ad esempio:
 
 ```php
-class BiblioImportMigrate extends Migrate {
+class BiblioUserMigrate extends Migrate {
   public function __construct($arguments) {
     // ...
     $this->addFieldMapping('username', 'generated_username');
@@ -303,7 +303,7 @@ class BiblioImportMigrate extends Migrate {
 La stessa funzione può anche essere utilizzata per evitare che un determinato record venga migrato; per fare questo è sufficiente che la funzione ritorni false. Nel nostro esempio vogliamo escludere l'importazione dei dati dove la lunghezza del nome o del cognome è minore di 3 caratteri perché probabilmente si tratta di un dato fasullo; la nostra implementazione diventerebbe:
 
 ```php
-class BiblioImportMigrate extends Migrate {
+class BiblioUserMigrate extends Migrate {
   // ...
 
   public function prepareRow(&$row) {
@@ -396,7 +396,7 @@ $destination->field_user_birthday = strtotime($source->birthday);
 Qualora avessimo necessità di svolgere operazioni più complesse, potremmo dichiarare all'interno della nostra classe di migrazione un metodo pubblico e usare questo come callback, ad esempio:
 
 ```php
-class BiblioImportMigrate extends Migrate {
+class BiblioUserMigrate extends Migrate {
   public function __construct($arguments) {
     // ...
     $this->addFieldMapping('field_user_birthday', 'birthday')
