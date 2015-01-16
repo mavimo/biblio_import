@@ -491,4 +491,34 @@ $this->addFieldMapping('field_user_categories', 'categories')
   ->sourceMigration('BookCategory');
 ```
 
-come vediamo stiamo usando nuovamente il metodo ```separator``` poiché abbiamo più di un elemento nel nostro campo, ma la parte interessante è il metodo ```sourceMigration```, che indica che migrazione usare per "convertire" il nostro valore di partenza con il valore identificativo dell'entità di destinazione della migrazione dipendente. Nel caso riprotato pocanzi la migrazione ```BookCategoryMigration``` ha migrato i dati del CSV in termini della tassonomia, salvando nella tabella di mapping la chiave della sorgente (il nome del termine) e la chiave di destinazione (l'ID del termine, il TID). Il source migration utilizza i dati salvati nella tabella di mapping per convertire il valore in ingresso (che sarà la chiave della sorgente) nella corrispettiva chiave della destinazione. questo consente di avere i TID corretti che sono quelli che vengono poi realmente referenziati all'interno della destinazione della migrazione utente.
+come vediamo stiamo usando nuovamente il metodo ```separator``` poiché abbiamo più di un elemento nel nostro campo, ma la parte interessante è il metodo ```sourceMigration``, che indica che migrazione usare per "convertire" il nostro valore di partenza con il valore identificativo dell'entità di destinazione della migrazione dipendente. Nel caso riprotato pocanzi la migrazione ```BookCategoryMigration``` ha migrato i dati del CSV in termini della tassonomia, salvando nella tabella di mapping la chiave della sorgente (il nome del termine) e la chiave di destinazione (l'ID del termine, il TID). Il source migration utilizza i dati salvati nella tabella di mapping per convertire il valore in ingresso (che sarà la chiave della sorgente) nella corrispettiva chiave della destinazione. questo consente di avere i TID corretti che sono quelli che vengono poi realmente referenziati all'interno della destinazione della migrazione utente.
+
+## Dichiarazione delle migrazioni
+
+Una volta costruite le migrazioni come visto fino ad ora dobbiamo "informare" Drupal dell'esistenza di queste migrazioni. Per fare questo dobbiamo creare un modulo che fornisca queste informazioni. Per fare questo dovremo creare un modulo (con i classici file ```info``` e ```module```). Nel file ```info``` avremo:
+
+```ini
+name = "Biblio import"
+description = "Import biblio informations"
+package = "Biblio"
+core = 7.x
+
+dependencies[] = migrate
+
+files[] = migration/biblio_category.inc
+files[] = migration/biblio_user.inc
+files[] = migration/biblio_item.inc
+```
+
+in cui, oltre alle classiche informazioni sul nome, descrizione, package e versione di Drupal, abbiamo definito una dipendenza verso il modulo ```migrate``` (che si occupa di effettuare le migrazioni) e dell'esistenza di tre file contenenti le classi di migrazioni.
+
+Il file ```module``` non necessità di particolari dichiarazioni, quindi avremo:
+
+```php
+<?php
+
+/**
+ * @file
+ * Import biblio informations in Drupal
+ */
+```
