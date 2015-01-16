@@ -3,4 +3,6 @@ description = "Import biblio item"
 package = "Biblio"
 core = 7.x
 
+files[] = migration/biblio_category.inc
+files[] = migration/biblio_user.inc
 files[] = migration/biblio_item.inc

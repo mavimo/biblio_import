@@ -20,6 +20,14 @@ function biblio_import_migrate_api() {
         'class_name' => 'BiblioItemMigration',
         'group_name' => 'biblio',
       ),
+      'BiblioUser' => array(
+        'class_name' => 'BiblioUserMigration',
+        'group_name' => 'biblio',
+      ),
+      'BiblioCategory' => array(
+        'class_name' => 'BiblioCategoryMigration',
+        'group_name' => 'biblio',
+      ),
     ),
   );
 

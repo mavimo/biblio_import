@@ -427,7 +427,7 @@ category
 E la corrispettiva migrazione, che importa questi tag all'interno del vocabolario ```book_category```:
 
 ```php
-class BookCategoryMigrate extends Migrate {
+class BiblioCategoryMigrate extends Migrate {
   public function __construct($arguments) {
     parent::__construct($arguments);
 
@@ -488,10 +488,10 @@ E di conseguenza la migrazione degli utenti, ipotizzando che il nome del campo a
 ```php
 $this->addFieldMapping('field_user_categories', 'categories')
   ->separator('|')
-  ->sourceMigration('BookCategory');
+  ->sourceMigration('BiblioCategory');
 ```
 
-come vediamo stiamo usando nuovamente il metodo ```separator``` poiché abbiamo più di un elemento nel nostro campo, ma la parte interessante è il metodo ```sourceMigration``, che indica che migrazione usare per "convertire" il nostro valore di partenza con il valore identificativo dell'entità di destinazione della migrazione dipendente. Nel caso riprotato pocanzi la migrazione ```BookCategoryMigration``` ha migrato i dati del CSV in termini della tassonomia, salvando nella tabella di mapping la chiave della sorgente (il nome del termine) e la chiave di destinazione (l'ID del termine, il TID). Il source migration utilizza i dati salvati nella tabella di mapping per convertire il valore in ingresso (che sarà la chiave della sorgente) nella corrispettiva chiave della destinazione. questo consente di avere i TID corretti che sono quelli che vengono poi realmente referenziati all'interno della destinazione della migrazione utente.
+come vediamo stiamo usando nuovamente il metodo ```separator``` poiché abbiamo più di un elemento nel nostro campo, ma la parte interessante è il metodo ```sourceMigration``, che indica che migrazione usare per "convertire" il nostro valore di partenza con il valore identificativo dell'entità di destinazione della migrazione dipendente. Nel caso riprotato pocanzi la migrazione ```BiblioCategoryMigration``` ha migrato i dati del CSV in termini della tassonomia, salvando nella tabella di mapping la chiave della sorgente (il nome del termine) e la chiave di destinazione (l'ID del termine, il TID). Il source migration utilizza i dati salvati nella tabella di mapping per convertire il valore in ingresso (che sarà la chiave della sorgente) nella corrispettiva chiave della destinazione. questo consente di avere i TID corretti che sono quelli che vengono poi realmente referenziati all'interno della destinazione della migrazione utente.
 
 ## Dichiarazione delle migrazioni
 
@@ -544,8 +544,8 @@ function biblio_import_migrate_api() {
       ),
     ),
     'migrations' => array(
-      'BiblioTerm' => array(
-        'class_name' => 'BiblioTermMigration',
+      'BiblioCategory' => array(
+        'class_name' => 'BiblioCategoryMigration',
         'group_name' => 'biblio',
       ),
       'BiblioUser' => array(
